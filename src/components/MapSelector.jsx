@@ -1215,9 +1215,8 @@ const MapSelector = ({
         console.log("Items before filtering:", allItems.length, allItems);
 
         // Filter to only include address-type results (exclude POIs)
-        const addressResults = filterAddressResults(allItems).map(
-          normalizeSearchItem,
-        );
+        const addressResults =
+          filterAddressResults(allItems).map(normalizeSearchItem);
 
         // Debug: Log filtered results
         console.log("Total items from API:", allItems.length);
@@ -1346,9 +1345,8 @@ const MapSelector = ({
             console.log("Filtered Nominatim results:", allItems.length);
 
             // Filter using our address filter
-            const addressResults = filterAddressResults(allItems).map(
-              normalizeSearchItem,
-            );
+            const addressResults =
+              filterAddressResults(allItems).map(normalizeSearchItem);
             const resultsToUse =
               addressResults.length > 0 ? addressResults : allItems;
 
@@ -1750,7 +1748,7 @@ const MapSelector = ({
 
         {/* Locations Panel - Overlay on bottom of map (hidden in overlay mode) */}
         {!overlay && (
-          <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t-2 border-gray-200 shadow-lg z-[50]">
+          <div className="absolute bottom-0 left-0 right-0 z-[50]">
             <div className="p-2 md:p-3">
               {/* Origin */}
               {origin && origin.lat && origin.lng && (

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import originIcon from "../pics/origin.png";
 import destinationIcon from "../pics/destination.png";
+import whiteLogo from "../pics/cropped-white-logo.avif";
 import useReverseGeocodeStore from "../store/reverseGeocodeStore";
 
 const MapSelector = ({
@@ -37,6 +38,87 @@ const MapSelector = ({
   const neshanSearchDisabledRef = useRef(false); // Flag to skip Neshan Search API if it fails
   const neshanReverseDisabledRef = useRef(false); // Flag to skip Neshan Reverse API if it fails
 
+  const normalizeSearchItem = (item) => {
+    if (!item || typeof item !== "object") return item;
+
+    const latFromItem =
+      item.lat ??
+      item.latitude ??
+      item.location?.lat ??
+      item.location?.latitude ??
+      item.location?.y ??
+      item.location?.[1];
+
+    const lngFromItem =
+      item.lng ??
+      item.lon ??
+      item.longitude ??
+      item.location?.lng ??
+      item.location?.lon ??
+      item.location?.longitude ??
+      item.location?.x ??
+      item.location?.[0];
+
+    const lat =
+      typeof latFromItem === "string" ? parseFloat(latFromItem) : latFromItem;
+    const lng =
+      typeof lngFromItem === "string" ? parseFloat(lngFromItem) : lngFromItem;
+
+    const normalizedLocation =
+      lat != null && lng != null
+        ? {
+            ...(item.location && typeof item.location === "object"
+              ? item.location
+              : {}),
+            lat,
+            lng,
+          }
+        : item.location;
+
+    return {
+      ...item,
+      lat: lat ?? item.lat,
+      lng: lng ?? item.lng,
+      location: normalizedLocation,
+    };
+  };
+
+  const extractCityFromResult = (result) => {
+    if (!result || typeof result !== "object") return "";
+
+    if (result.city) return String(result.city).trim();
+
+    if (Array.isArray(result.address_components)) {
+      const cityComponent = result.address_components.find((comp) =>
+        comp?.types?.includes("locality"),
+      );
+      if (cityComponent?.name) {
+        return String(cityComponent.name).trim();
+      }
+    }
+
+    if (result.region) return String(result.region).trim();
+
+    const text =
+      result.address ||
+      result.title ||
+      result.name ||
+      result.display_name ||
+      "";
+    if (!text) return "";
+
+    const parts = text
+      .split(/[،,]/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length >= 2) {
+      return parts[parts.length - 2];
+    }
+
+    return parts[0] || "";
+  };
+
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -45,7 +127,7 @@ const MapSelector = ({
 
     if (!mapApiKey) {
       setMapError(
-        "لطفا API Key نقشه نشان را در فایل .env تنظیم کنید (VITE_NESHAN_API_KEY)."
+        "لطفا API Key نقشه نشان را در فایل .env تنظیم کنید (VITE_NESHAN_API_KEY).",
       );
       return;
     }
@@ -272,7 +354,7 @@ const MapSelector = ({
         midPoint,
         distance,
         color = "#3b82f6",
-        textColor = "#1e40af"
+        textColor = "#1e40af",
       ) => {
         const distanceKm = (distance / 1000).toFixed(1);
         const distanceText =
@@ -362,7 +444,7 @@ const MapSelector = ({
 
             if (!directionApiKey) {
               console.error(
-                "VITE_NESHAN_DIRECTION_API_KEY or VITE_NESHAN_API_KEY is not set in .env file"
+                "VITE_NESHAN_DIRECTION_API_KEY or VITE_NESHAN_API_KEY is not set in .env file",
               );
               throw new Error("Neshan Direction API key is not configured");
             }
@@ -418,7 +500,7 @@ const MapSelector = ({
               // Format 1: routes[0].overview_polyline.points
               if (routeData.routes?.[0]?.overview_polyline?.points) {
                 const decoded = decodePolyline(
-                  routeData.routes[0].overview_polyline.points
+                  routeData.routes[0].overview_polyline.points,
                 );
                 segmentPoints = decoded;
               }
@@ -482,7 +564,7 @@ const MapSelector = ({
               // Format 6: Try root level
               else if (routeData.overview_polyline?.points) {
                 const decoded = decodePolyline(
-                  routeData.overview_polyline.points
+                  routeData.overview_polyline.points,
                 );
                 segmentPoints = decoded;
               } else if (
@@ -506,20 +588,20 @@ const MapSelector = ({
                   }
                 });
                 console.log(
-                  `Added ${cleanedPoints.length} route points for segment ${i}, distance: ${segmentDistance}m`
+                  `Added ${cleanedPoints.length} route points for segment ${i}, distance: ${segmentDistance}m`,
                 );
                 allRoutePoints.push(...cleanedPoints);
                 totalDistance += segmentDistance;
               } else {
                 console.warn(
                   `No route points found in API response for segment ${i}. Full response:`,
-                  JSON.stringify(routeData, null, 2)
+                  JSON.stringify(routeData, null, 2),
                 );
               }
             } else {
               console.warn(
                 `Failed to fetch route for segment ${i}:`,
-                lastError
+                lastError,
               );
             }
           } catch (segmentError) {
@@ -570,7 +652,7 @@ const MapSelector = ({
         // Draw route if we have points
         if (allRoutePoints.length > 0) {
           console.log(
-            `Drawing route with ${allRoutePoints.length} points, total distance: ${totalDistance}m`
+            `Drawing route with ${allRoutePoints.length} points, total distance: ${totalDistance}m`,
           );
           const polyline = L.polyline(allRoutePoints, {
             color: "#3b82f6",
@@ -588,7 +670,7 @@ const MapSelector = ({
 
             routeDistanceMarkerRef.current = createDistanceLabel(
               midPoint,
-              totalDistance
+              totalDistance,
             );
           }
         } else {
@@ -602,7 +684,7 @@ const MapSelector = ({
               points[i].lat,
               points[i].lng,
               points[i + 1].lat,
-              points[i + 1].lng
+              points[i + 1].lng,
             );
             totalDistance += dist;
           }
@@ -625,7 +707,7 @@ const MapSelector = ({
               midPoint,
               totalDistance,
               "#ff6b6b",
-              "#dc2626"
+              "#dc2626",
             );
           }
         }
@@ -670,7 +752,7 @@ const MapSelector = ({
               points[i].lat,
               points[i].lng,
               points[i + 1].lat,
-              points[i + 1].lng
+              points[i + 1].lng,
             );
             totalDistance += dist;
           }
@@ -691,7 +773,7 @@ const MapSelector = ({
 
             routeDistanceMarkerRef.current = createDistanceLabel(
               midPoint,
-              totalDistance
+              totalDistance,
             );
           }
         }
@@ -725,7 +807,7 @@ const MapSelector = ({
 
         if (!reverseApiKey) {
           console.warn(
-            "VITE_NESHAN_REVERSE_API_KEY or VITE_NESHAN_API_KEY is not set in .env file"
+            "VITE_NESHAN_REVERSE_API_KEY or VITE_NESHAN_API_KEY is not set in .env file",
           );
         } else {
           // Try Neshan Reverse Geocoding API first
@@ -735,7 +817,7 @@ const MapSelector = ({
               headers: {
                 "Api-Key": reverseApiKey,
               },
-            }
+            },
           );
 
           const data = await response.json();
@@ -745,7 +827,7 @@ const MapSelector = ({
             if (data.code === 483) {
               // API Key not suitable for Reverse API - disable it permanently for this session
               console.warn(
-                "Neshan Reverse API key not suitable (code 483), disabling Neshan Reverse for this session"
+                "Neshan Reverse API key not suitable (code 483), disabling Neshan Reverse for this session",
               );
               neshanReverseDisabledRef.current = true;
             }
@@ -769,7 +851,7 @@ const MapSelector = ({
     if (!address) {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fa`
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fa`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -803,7 +885,7 @@ const MapSelector = ({
 
       if (!quotaApiKey) {
         console.warn(
-          "VITE_NESHAN_QUOTA_API_KEY or VITE_NESHAN_API_KEY is not set in .env file"
+          "VITE_NESHAN_QUOTA_API_KEY or VITE_NESHAN_API_KEY is not set in .env file",
         );
         return null;
       }
@@ -830,7 +912,7 @@ const MapSelector = ({
     if (origin && origin.lat && origin.lng) {
       reverseGeocode(origin.lat, origin.lng).then((address) => {
         setOriginAddress(
-          address || `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`
+          address || `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`,
         );
       });
     } else {
@@ -848,7 +930,7 @@ const MapSelector = ({
               return reverseGeocode(dest.lat, dest.lng);
             }
             return null;
-          })
+          }),
         );
         setDestinationAddresses(
           addresses.map(
@@ -856,8 +938,8 @@ const MapSelector = ({
               addr ||
               `${destinations[index]?.lat?.toFixed(4)}, ${destinations[
                 index
-              ]?.lng?.toFixed(4)}`
-          )
+              ]?.lng?.toFixed(4)}`,
+          ),
         );
       };
       fetchAddresses();
@@ -947,7 +1029,7 @@ const MapSelector = ({
         "boulevard",
       ];
       const looksLikeAddress = addressPatterns.some((pattern) =>
-        title.includes(pattern)
+        title.includes(pattern),
       );
 
       // If type is explicitly "poi", exclude it
@@ -997,7 +1079,7 @@ const MapSelector = ({
 
           if (!searchApiKey) {
             console.warn(
-              "VITE_NESHAN_SEARCH_API_KEY or VITE_NESHAN_API_KEY is not set in .env file"
+              "VITE_NESHAN_SEARCH_API_KEY or VITE_NESHAN_API_KEY is not set in .env file",
             );
             neshanSearchDisabledRef.current = true;
             return;
@@ -1005,7 +1087,7 @@ const MapSelector = ({
 
           // Try Neshan Search API first
           const searchUrl = `https://api.neshan.org/v1/search?term=${encodeURIComponent(
-            query.trim()
+            query.trim(),
           )}&lat=35.699756&lng=51.338076`;
 
           try {
@@ -1023,7 +1105,7 @@ const MapSelector = ({
               if (data.code === 483) {
                 // API Key not suitable for Search API - disable it permanently for this session
                 console.warn(
-                  "Neshan Search API key not suitable (code 483), disabling Neshan Search for this session"
+                  "Neshan Search API key not suitable (code 483), disabling Neshan Search for this session",
                 );
                 neshanSearchDisabledRef.current = true;
               } else {
@@ -1035,9 +1117,9 @@ const MapSelector = ({
 
               // Handle different response structures
               if (data.items && Array.isArray(data.items)) {
-                allItems = data.items;
+                allItems = data.items.map(normalizeSearchItem);
               } else if (Array.isArray(data)) {
-                allItems = data;
+                allItems = data.map(normalizeSearchItem);
               }
             }
           } catch (neshanError) {
@@ -1050,13 +1132,13 @@ const MapSelector = ({
           console.log("Using Nominatim (OpenStreetMap) as fallback");
           const nominatimResponse = await fetch(
             `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-              query.trim()
+              query.trim(),
             )}&format=json&limit=10&accept-language=fa&countrycodes=ir&bounded=1&viewbox=44.0,25.0,64.0,40.0&addressdetails=1`,
             {
               headers: {
                 "User-Agent": "IntercityTaxiApp/1.0",
               },
-            }
+            },
           );
 
           if (nominatimResponse.ok) {
@@ -1091,7 +1173,7 @@ const MapSelector = ({
                 ];
 
                 const isPOI = poiPatterns.some((pattern) =>
-                  addressLower.includes(pattern)
+                  addressLower.includes(pattern),
                 );
 
                 // Prefer addresses (streets, alleys, etc.)
@@ -1106,7 +1188,7 @@ const MapSelector = ({
                   "square",
                 ];
                 const looksLikeAddress = addressPatterns.some((pattern) =>
-                  addressLower.includes(pattern)
+                  addressLower.includes(pattern),
                 );
 
                 return !isPOI || looksLikeAddress;
@@ -1122,7 +1204,8 @@ const MapSelector = ({
                   lng: parseFloat(item.lon),
                 },
                 type: "address", // Mark as address for filtering
-              }));
+              }))
+              .map(normalizeSearchItem);
 
             console.log("Filtered Nominatim results:", allItems.length);
           }
@@ -1132,7 +1215,9 @@ const MapSelector = ({
         console.log("Items before filtering:", allItems.length, allItems);
 
         // Filter to only include address-type results (exclude POIs)
-        const addressResults = filterAddressResults(allItems);
+        const addressResults = filterAddressResults(allItems).map(
+          normalizeSearchItem,
+        );
 
         // Debug: Log filtered results
         console.log("Total items from API:", allItems.length);
@@ -1143,14 +1228,24 @@ const MapSelector = ({
         // If filtering removed all results, use original results (fallback)
         // This ensures users always get results when API returns data
         const resultsToUse =
-          addressResults.length > 0 ? addressResults : allItems;
+          addressResults.length > 0
+            ? addressResults
+            : allItems.map(normalizeSearchItem);
 
         console.log("Results to use (after fallback):", resultsToUse.length);
 
         // Additional filter: Ensure results are within Iran's geographic bounds
         const iranAddressResults = resultsToUse.filter((item) => {
-          const lat = item.location?.lat || item.lat;
-          const lng = item.location?.lng || item.lng;
+          const lat =
+            item.location?.lat ??
+            item.lat ??
+            item.location?.y ??
+            item.location?.[1];
+          const lng =
+            item.location?.lng ??
+            item.lng ??
+            item.location?.x ??
+            item.location?.[0];
 
           // Iran's approximate geographic bounds
           if (!lat || !lng) return false;
@@ -1159,7 +1254,7 @@ const MapSelector = ({
 
         console.log(
           "Final results after geographic filter:",
-          iranAddressResults.length
+          iranAddressResults.length,
         );
 
         // Update results
@@ -1173,13 +1268,13 @@ const MapSelector = ({
         try {
           const nominatimResponse = await fetch(
             `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-              query.trim()
+              query.trim(),
             )}&format=json&limit=10&accept-language=fa&countrycodes=ir&bounded=1&viewbox=44.0,25.0,64.0,40.0&addressdetails=1`,
             {
               headers: {
                 "User-Agent": "IntercityTaxiApp/1.0",
               },
-            }
+            },
           );
 
           if (nominatimResponse.ok) {
@@ -1214,7 +1309,7 @@ const MapSelector = ({
                 ];
 
                 const isPOI = poiPatterns.some((pattern) =>
-                  addressLower.includes(pattern)
+                  addressLower.includes(pattern),
                 );
 
                 // Prefer addresses (streets, alleys, etc.)
@@ -1229,7 +1324,7 @@ const MapSelector = ({
                   "square",
                 ];
                 const looksLikeAddress = addressPatterns.some((pattern) =>
-                  addressLower.includes(pattern)
+                  addressLower.includes(pattern),
                 );
 
                 return !isPOI || looksLikeAddress;
@@ -1245,19 +1340,30 @@ const MapSelector = ({
                   lng: parseFloat(item.lon),
                 },
                 type: "address", // Mark as address for filtering
-              }));
+              }))
+              .map(normalizeSearchItem);
 
             console.log("Filtered Nominatim results:", allItems.length);
 
             // Filter using our address filter
-            const addressResults = filterAddressResults(allItems);
+            const addressResults = filterAddressResults(allItems).map(
+              normalizeSearchItem,
+            );
             const resultsToUse =
               addressResults.length > 0 ? addressResults : allItems;
 
             // Geographic filter
             const iranAddressResults = resultsToUse.filter((item) => {
-              const lat = item.location?.lat || item.lat;
-              const lng = item.location?.lng || item.lng;
+              const lat =
+                item.location?.lat ??
+                item.lat ??
+                item.location?.y ??
+                item.location?.[1];
+              const lng =
+                item.location?.lng ??
+                item.lng ??
+                item.location?.x ??
+                item.location?.[0];
               if (!lat || !lng) return false;
               return lat >= 25 && lat <= 40 && lng >= 44 && lng <= 64;
             });
@@ -1411,6 +1517,13 @@ const MapSelector = ({
               </button>
             )}
           </div>
+          <div className="absolute top-4 right-4 z-[120] pointer-events-none">
+            <img
+              src={whiteLogo}
+              alt="Logo"
+              className="h-10 md:h-12 w-auto drop-shadow-lg"
+            />
+          </div>
         </>
       )}
 
@@ -1533,48 +1646,56 @@ const MapSelector = ({
                 {/* Results List */}
                 {!isSearching && searchResults.length > 0 && (
                   <>
-                    {searchResults.map((result, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => handleSelectSearchResult(result)}
-                        className="w-full text-right px-4 py-3 hover:bg-sky-50 transition-colors border-b border-gray-100 last:border-b-0"
-                      >
-                        <div className="flex items-start gap-3">
-                          <svg
-                            className="h-5 w-5 text-sky-500 mt-0.5 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-800">
-                              {result.title || result.name || result.address}
-                            </p>
-                            {result.address &&
-                              result.address !==
-                                (result.title || result.name) && (
-                                <p className="text-sm text-gray-500 mt-1">
-                                  {result.address}
+                    {searchResults.map((result, index) => {
+                      const city = extractCityFromResult(result);
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleSelectSearchResult(result)}
+                          className="w-full text-right px-4 py-3 hover:bg-sky-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="flex items-start gap-3">
+                            <svg
+                              className="h-5 w-5 text-sky-500 mt-0.5 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800">
+                                {result.title || result.name || result.address}
+                              </p>
+                              {result.address &&
+                                result.address !==
+                                  (result.title || result.name) && (
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {result.address}
+                                  </p>
+                                )}
+                              {city && (
+                                <p className="text-xs text-sky-700 mt-1">
+                                  شهر: {city}
                                 </p>
                               )}
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </>
                 )}
 
@@ -1643,7 +1764,7 @@ const MapSelector = ({
                         {
                           animate: true,
                           duration: 1.5,
-                        }
+                        },
                       );
                     }
                   }}
@@ -1719,7 +1840,7 @@ const MapSelector = ({
                             {
                               animate: true,
                               duration: 1.5,
-                            }
+                            },
                           );
                         }
                       }}

@@ -171,6 +171,9 @@ export const calculatePrice = async (formData) => {
         String(dest.lat),
         String(dest.lng)
       ]),
+      tripType: formData.tripType || 1,
+      luggage_count: formData.luggage_count || 0,
+      hasPet: formData.hasPet || 0,
       tripDays: "0",
       passenger_count: formData.passengers,
       trip_driver_food: formData.driverFood ? 1 : 0,

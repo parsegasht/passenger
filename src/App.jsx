@@ -90,7 +90,7 @@ function App() {
             headers: {
               "Api-Key": reverseApiKey,
             },
-          }
+          },
         );
 
         if (response.ok) {
@@ -109,7 +109,7 @@ function App() {
           } else if (data.address_components) {
             // Try to find city in address_components
             const cityComponent = data.address_components.find(
-              (comp) => comp.types && comp.types.includes("locality")
+              (comp) => comp.types && comp.types.includes("locality"),
             );
             if (cityComponent) {
               city = cityComponent.name;
@@ -126,7 +126,7 @@ function App() {
             headers: {
               "User-Agent": "IntercityTaxiApp",
             },
-          }
+          },
         );
 
         if (nominatimResponse.ok) {
@@ -314,14 +314,14 @@ function App() {
 
   const handleBookTrip = async (carTypeId) => {
     const selectedCar = results?.find(
-      (car) => car.id === carTypeId || car.carTypeId === carTypeId
+      (car) => car.id === carTypeId || car.carTypeId === carTypeId,
     );
     console.log("handleBookTrip - carTypeId:", carTypeId);
     console.log("handleBookTrip - found car:", selectedCar);
     console.log("handleBookTrip - car apiData:", selectedCar?.apiData);
     console.log(
       "handleBookTrip - car costBreakdown:",
-      selectedCar?.apiData?.costBreakdown
+      selectedCar?.apiData?.costBreakdown,
     );
     setSelectedCarForBooking(selectedCar);
     setShowBookingForm(true);
@@ -426,20 +426,20 @@ function App() {
       }
 
       const formattedDate = `${gy}-${String(gm).padStart(2, "0")}-${String(
-        gd
+        gd,
       ).padStart(2, "0")}`;
       const tripStartDate = `${formattedDate} ${formData.time}:00`;
 
       // Get address and city for origin and destinations
       const originGeocode = await reverseGeocodeWithCity(
         formData.origin.lat,
-        formData.origin.lng
+        formData.origin.lng,
       );
 
       const destinationsGeocode = await Promise.all(
         formData.destinations.map((dest) =>
-          reverseGeocodeWithCity(dest.lat, dest.lng)
-        )
+          reverseGeocodeWithCity(dest.lat, dest.lng),
+        ),
       );
 
       // Build trip_points array
@@ -448,13 +448,13 @@ function App() {
           lat: String(formData.origin.lat),
           lon: String(formData.origin.lng),
           address: originGeocode.address || "",
-          city: originGeocode.city || "",
+          city: originGeocode.address?.split("،")[0].trim() || "",
         },
         ...formData.destinations.map((dest, index) => ({
           lat: String(dest.lat),
           lon: String(dest.lng),
           address: destinationsGeocode[index]?.address || "",
-          city: destinationsGeocode[index]?.city || "",
+          city: destinationsGeocode[index]?.address?.split("،")[0].trim() || "",
         })),
       ];
 
@@ -464,6 +464,8 @@ function App() {
           String(dest.lat),
           String(dest.lng),
         ]),
+        costBreakdown: selectedCarForBooking?.apiData?.costBreakdown || {},
+        trip_type: 0,
         tripDays: "0",
         passenger_count: formData.passengers,
         trip_driver_food: formData.driverFood ? 1 : 0,
@@ -492,16 +494,13 @@ function App() {
 
       if (selectedCarForBooking?.apiData?.costBreakdown) {
         costBreakdown = selectedCarForBooking.apiData.costBreakdown;
-        console.log(
-          "Found costBreakdown in selectedCarForBooking:",
-          costBreakdown
-        );
+        bookingPayload.costBreakdown = costBreakdown;
       } else {
         // Fallback: try to find it from results
         const carTypeId =
           selectedCarForBooking?.carTypeId || selectedCarForBooking?.id;
         const carFromResults = results?.find(
-          (car) => car.id === carTypeId || car.carTypeId === carTypeId
+          (car) => car.id === carTypeId || car.carTypeId === carTypeId,
         );
         if (carFromResults?.apiData?.costBreakdown) {
           costBreakdown = carFromResults.apiData.costBreakdown;
@@ -511,7 +510,7 @@ function App() {
             "costBreakdown not found anywhere. selectedCarForBooking:",
             selectedCarForBooking,
             "results:",
-            results
+            results,
           );
         }
       }
@@ -524,7 +523,7 @@ function App() {
         });
         console.log(
           "Added costBreakdown fields to payload:",
-          Object.keys(costBreakdown)
+          Object.keys(costBreakdown),
         );
 
         // Extract specific fields from costBreakdown with new names
@@ -558,18 +557,18 @@ function App() {
           trip_tarhPrice: bookingPayload.trip_tarhPrice,
           trip_went_total_price: bookingPayload.trip_went_price,
           trip_comeback_total_price: bookingPayload.trip_comeback_total_price,
-          trip_total_price: bookingPayload.trip_total_price,
+          trip_total_price: costBreakdown.total_cost,
           trip_prePayment: bookingPayload.trip_prePayment,
         });
       } else {
         console.error(
-          "ERROR: costBreakdown is null or undefined. Cannot add to payload."
+          "ERROR: costBreakdown is null or undefined. Cannot add to payload.",
         );
       }
 
       console.log(
         "Final booking payload:",
-        JSON.stringify(bookingPayload, null, 2)
+        JSON.stringify(bookingPayload, null, 2),
       );
 
       // Use proxy in development to avoid CORS issues
@@ -701,8 +700,8 @@ function App() {
               {showBookingForm
                 ? "ثبت اطلاعات"
                 : results
-                ? "انتخاب خودرو"
-                : "جزئیات سفر"}
+                  ? "انتخاب خودرو"
+                  : "جزئیات سفر"}
             </h2>
             <div className="flex items-center gap-2">
               {/* Back Button - Show in results and booking form stages */}
@@ -802,7 +801,7 @@ function App() {
                               ? formatJalaliDate(
                                   formData.date.year,
                                   formData.date.month,
-                                  formData.date.day
+                                  formData.date.day,
                                 )
                               : "نامشخص"}
                           </p>

@@ -465,7 +465,7 @@ function App() {
           String(dest.lng),
         ]),
         costBreakdown: selectedCarForBooking?.apiData?.costBreakdown || {},
-        trip_type: 0,
+        trip_type: 1,
         tripDays: "0",
         passenger_count: formData.passengers,
         trip_driver_food: formData.driverFood ? 1 : 0,
@@ -486,8 +486,8 @@ function App() {
         trip_points: tripPoints,
         trip_origin_city: originGeocode.city || "",
         trip_destination_city: destinationsGeocode[0]?.city || "",
+        metaData: { source: "Taxirooz" },
       };
-
       // Add costBreakdown fields directly to payload (spread costBreakdown object)
       // Try to get from selectedCarForBooking first, then from results
       let costBreakdown = null;
@@ -504,6 +504,7 @@ function App() {
         );
         if (carFromResults?.apiData?.costBreakdown) {
           costBreakdown = carFromResults.apiData.costBreakdown;
+          bookingPayload.trip_distance = carFromResults.apiData.distance;
           console.log("Found costBreakdown in results:", costBreakdown);
         } else {
           console.warn(
@@ -518,14 +519,13 @@ function App() {
       // Spread costBreakdown fields directly into payload instead of nested object
       if (costBreakdown) {
         // Add all costBreakdown fields directly to payload root level
-        Object.keys(costBreakdown).forEach((key) => {
-          bookingPayload[key] = costBreakdown[key];
-        });
+        // Object.keys(costBreakdown).forEach((key) => {
+        //   bookingPayload[key] = costBreakdown[key];
+        // });
         console.log(
           "Added costBreakdown fields to payload:",
           Object.keys(costBreakdown),
         );
-
         // Extract specific fields from costBreakdown with new names
         // trip_tarhPrice from tarh_cost
         if (costBreakdown.tarh_cost !== undefined) {
@@ -534,13 +534,13 @@ function App() {
 
         // trip_total_price from total_cost
         if (costBreakdown.total_cost !== undefined) {
-          bookingPayload.trip_total_price = costBreakdown.total_cost;
+          bookingPayload.trip_totalprice = costBreakdown.total_cost;
         }
 
-        // trip_went_price from total_cost (same as total_cost)
-        if (costBreakdown.total_cost !== undefined) {
-          bookingPayload.trip_went_price = costBreakdown.total_cost;
-        }
+        // // trip_went_price from total_cost (same as total_cost)
+        // if (costBreakdown.total_cost !== undefined) {
+        //   bookingPayload.trip_went_price = costBreakdown.total_cost;
+        // }
 
         // trip_comeback_total_price from comeback_cost
         if (costBreakdown.comeback_cost !== undefined) {
@@ -557,7 +557,7 @@ function App() {
           trip_tarhPrice: bookingPayload.trip_tarhPrice,
           trip_went_total_price: bookingPayload.trip_went_price,
           trip_comeback_total_price: bookingPayload.trip_comeback_total_price,
-          trip_total_price: costBreakdown.total_cost,
+          trip_totalـprice: costBreakdown.total_cost,
           trip_prePayment: bookingPayload.trip_prePayment,
         });
       } else {

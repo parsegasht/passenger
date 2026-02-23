@@ -486,7 +486,8 @@ function App() {
         trip_points: tripPoints,
         trip_origin_city: originGeocode.city || "",
         trip_destination_city: destinationsGeocode[0]?.city || "",
-        metaData: { source: "Taxirooz" },
+        trip_distance: selectedCarForBooking?.distance || 999,
+        metadata: { source: "Taxirooz" },
       };
       // Add costBreakdown fields directly to payload (spread costBreakdown object)
       // Try to get from selectedCarForBooking first, then from results
@@ -504,7 +505,6 @@ function App() {
         );
         if (carFromResults?.apiData?.costBreakdown) {
           costBreakdown = carFromResults.apiData.costBreakdown;
-          bookingPayload.trip_distance = carFromResults.apiData.distance;
           console.log("Found costBreakdown in results:", costBreakdown);
         } else {
           console.warn(
@@ -534,7 +534,7 @@ function App() {
 
         // trip_total_price from total_cost
         if (costBreakdown.total_cost !== undefined) {
-          bookingPayload.trip_totalprice = costBreakdown.total_cost;
+          bookingPayload.trip_total_price = costBreakdown.total_cost;
         }
 
         // // trip_went_price from total_cost (same as total_cost)

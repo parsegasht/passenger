@@ -4,6 +4,13 @@ import destinationIcon from "../pics/destination.png";
 import whiteLogo from "../pics/cropped-white-logo.avif";
 import useReverseGeocodeStore from "../store/reverseGeocodeStore";
 
+const NESHAN_SDK_CSS_URL =
+  "https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.css";
+const NESHAN_SDK_JS_URL =
+  "https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js";
+
+let neshanSdkPromise = null;
+
 const MapSelector = ({
   label,
   origin,
@@ -119,6 +126,84 @@ const MapSelector = ({
     return parts[0] || "";
   };
 
+  const getLeaflet = () => {
+    if (typeof window === "undefined") return null;
+    const candidate =
+      window.__NESHAN_LEAFLET__ || window.Neshan?.L || window.L || null;
+    if (
+      !candidate ||
+      typeof candidate.Map !== "function" ||
+      typeof candidate.marker !== "function" ||
+      typeof candidate.icon !== "function"
+    ) {
+      return null;
+    }
+    return candidate;
+  };
+
+  const ensureNeshanSdkLoaded = () => {
+    if (typeof document === "undefined") return Promise.resolve(null);
+    const existing = getLeaflet();
+    if (existing) return Promise.resolve(existing);
+
+    if (neshanSdkPromise) return neshanSdkPromise;
+
+    neshanSdkPromise = new Promise((resolve, reject) => {
+      if (!document.querySelector(`link[href="${NESHAN_SDK_CSS_URL}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = NESHAN_SDK_CSS_URL;
+        document.head.appendChild(link);
+      }
+
+      const onReady = () => {
+        if (window.L && !window.__NESHAN_LEAFLET__) {
+          // Keep a stable reference before other plugins override window.L.
+          window.__NESHAN_LEAFLET__ = window.L;
+        }
+        const L = getLeaflet();
+        if (L) {
+          resolve(L);
+        } else {
+          reject(new Error("Neshan SDK loaded but Leaflet was not found"));
+        }
+      };
+
+      const existingScript = document.querySelector(
+        `script[src="${NESHAN_SDK_JS_URL}"]`,
+      );
+      if (existingScript) {
+        if (existingScript.dataset.loaded === "true") {
+          onReady();
+        } else {
+          existingScript.addEventListener("load", () => {
+            existingScript.dataset.loaded = "true";
+            onReady();
+          });
+          existingScript.addEventListener("error", () => {
+            reject(new Error("Failed to load Neshan SDK script"));
+          });
+        }
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = NESHAN_SDK_JS_URL;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        script.dataset.loaded = "true";
+        onReady();
+      };
+      script.onerror = () => {
+        reject(new Error("Failed to load Neshan SDK script"));
+      };
+      document.head.appendChild(script);
+    });
+
+    return neshanSdkPromise;
+  };
+
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -136,7 +221,11 @@ const MapSelector = ({
     const maxRetries = 50;
 
     const initMap = () => {
-      if (typeof window === "undefined" || !window.L) {
+      const L = getLeaflet();
+      if (!L) {
+        ensureNeshanSdkLoaded().catch((error) => {
+          console.warn("Neshan SDK load failed:", error);
+        });
         retryCount++;
         if (retryCount < maxRetries) {
           setTimeout(initMap, 100);
@@ -147,7 +236,6 @@ const MapSelector = ({
       }
 
       try {
-        const L = window.L;
         // Get API key from environment if not provided as prop
         const mapApiKey = apiKey || import.meta.env.VITE_NESHAN_API_KEY;
 
@@ -199,7 +287,8 @@ const MapSelector = ({
 
   // Handle map clicks - first click = origin, subsequent clicks = destinations
   useEffect(() => {
-    if (!mapInstanceRef.current || !window.L) return;
+    const L = getLeaflet();
+    if (!mapInstanceRef.current || !L) return;
 
     const map = mapInstanceRef.current;
 
@@ -227,9 +316,8 @@ const MapSelector = ({
 
   // Update markers and draw route
   useEffect(() => {
-    if (!mapInstanceRef.current || !window.L) return;
-
-    const L = window.L;
+    const L = getLeaflet();
+    if (!mapInstanceRef.current || !L) return;
     // Images are 155x207, we'll scale them appropriately
     const iconWidth = 50;
     const iconHeight = 67; // Maintain aspect ratio (155/207)
@@ -330,7 +418,8 @@ const MapSelector = ({
         routeDistanceMarkerRef.current = null;
       }
 
-      const L = window.L;
+      const L = getLeaflet();
+      if (!L) return;
       const allRoutePoints = [];
       let totalDistance = 0; // Total distance in meters
 

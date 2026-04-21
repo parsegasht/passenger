@@ -1,0 +1,80 @@
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-Thin.woff2")
+    format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-ExtraLight.woff2")
+    format("woff2");
+  font-weight: 400; /* این وزن برای ExtraLight کمی نامعمول است، اما اگر در فایل‌ها به این صورت است، استفاده کنید */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-Light.woff2")
+    format("woff2");
+  font-weight: 300; /* این وزن برای Light کمی نامعمول است، اما اگر در فایل‌ها به این صورت است، استفاده کنید */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-Bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-ExtraBold.woff2")
+    format("woff2");
+  font-weight: 800; /* وزن 800 برای ExtraBold */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("https://lib.arvancloud.ir/vazir-font/33.003/Farsi-Digits-Non-Latin/fonts/webfonts/Vazirmatn-FD-NL-Black.woff2")
+    format("woff2");
+  font-weight: 900; /* وزن 900 برای Black */
+  font-style: normal;
+  font-display: swap;
+}
